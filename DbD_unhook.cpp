@@ -1,29 +1,118 @@
-﻿#include <random>
+#include <random>
 #include <iostream>
 #include <chrono>
 
-constexpr auto number_of_simulations = 100000000; // Количество симуляций игр
-
 using namespace std;
 
-int main()
+int main(int argc, char *argv[])
 {
     setlocale(LC_ALL, "Russian");
 
-    cout << "Идут вычисления, пожалуйста, подождите..." << endl << endl;
-
     random_device rd;   // недетерминированный генератор случайных чисел
+    std::seed_seq seed2{ rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd() };
+    std::mt19937 e1(seed2);
     uniform_int_distribution<> dist(1, 100); // распределять результаты от 1 до 100 включительно
-    unique_ptr<unsigned char[]> run(new unsigned char[number_of_simulations]);
     unsigned int game = 0;
     unsigned int runs = 0;
     unsigned int numbers_of_players = 4;
-    unsigned int trying_unhooks = 3;
     unsigned int one_runs = 0;
     unsigned int two_runs = 0;
     unsigned int three_runs = 0;
     unsigned int four_runs = 0;
     double mean_runs = 0;
+    unsigned int trying_unhooks = 3;
+    unsigned int luck = 4;
+    unsigned int number_of_simulations = 100000000; // Количество симуляций игр
+    
+
+    char key;
+    char* arg;
+
+    while(--argc > 0 && (*++argv)[0] == '-')
+        if(key = *++argv[0])
+            switch (key)
+            {
+            case('l'):
+                if (--argc > 0)
+                {
+                    arg = *++argv;
+                    luck = atoi(arg);
+
+                    if (luck <= 0 || luck > 100)
+                    {
+                        cout << "Процент удачи должен находится в пределах (0 < luck < 100). Вы указали: \'-l " << arg << "\'" << endl;
+                        cout << "Попробуйте ввести, например, \"-l 6\"" << endl;
+                        return -1;
+                    }
+                }
+                else
+                {
+                    cout << "После опции \"" << key << "\" должен быть указан процент удачи!" << endl;
+                    cout << "Попробуйте ввести, например, \"-l 6\"" << endl;
+                    return -1;
+                }
+                break;
+
+            case('t'):
+                if (--argc > 0)
+                {
+                    arg = *++argv;
+                    trying_unhooks = atoi(arg);
+                    if (trying_unhooks <= 0)
+                    {
+                        cout << "Количество спрыгиваний не может быть отрицательным или нулевым. Вы указали: \'-t " << arg << "\'" << endl;
+                        cout << "Попробуйте ввести, например, \"-t 6\"" << endl;
+                        return -1;
+                    }
+                }
+                else
+                {
+                    cout << "После опции \"" << key << "\" должно быть указано количество попыток!" << endl;
+                    cout << "Попробуйте ввести, например, \"-t 6\"" << endl;
+                    return -1;
+                }
+                break;
+
+            case('n'):
+                if (--argc > 0)
+                {
+                    arg = *++argv;
+                    number_of_simulations = atoi(arg);
+                    if (number_of_simulations <= 0 || number_of_simulations >= UINT64_MAX)
+                    {
+                        cout << "Количество испытаний не может быть отрицательным или нулевым. Вы указали: \'-n " << arg << "\'" << endl;
+                        cout << "Попробуйте ввести, например, \"-n 10000000\"" << endl;
+                        return -1;
+                    }
+                }
+                else
+                {
+                    cout << "После опции \"" << key << "\" должно быть указано количество испытаний!" << endl;
+                    cout << "Попробуйте ввести, например, \"-n 100000000\"" << endl;
+                    return -1;
+                }
+                break;
+
+            case('h'):
+                cout << "Справка" << endl;
+                cout << "-l: процент удачи у выжившего.\n   Например, указать удачу 8%: -l 8\n   По умолчанию: 4\n\n";
+                cout << "-t: количество попыток спрыгнуть с крюка.\n   Например, указать 6 попыток: -t 6\n   По умолчанию: 3\n\n";
+                cout << "-n: количество испытаний.\n   Например, провести эксперимент в 100000 игр: -n 100000\n   По умолчанию: 100000000. Больше - точнее результаты\n\n";
+                return 0;
+                break;
+
+            default:
+                cout << "Обнаружена неизвестная опция \"" << key << endl;
+                cout << "Справка: -h" << endl;
+                return -2;
+            }
+
+    unique_ptr<unsigned char[]> run(new unsigned char[number_of_simulations]);
+
+    cout << "Программа запущена с параметрами: " << "-l " << luck << " -t " << trying_unhooks << " -n " << number_of_simulations << endl;
+    cout << "Идут вычисления, пожалуйста, подождите..." << endl << endl;
+
+    
     
     auto start = std::chrono::steady_clock::now();
 
@@ -36,7 +125,7 @@ int main()
         {
             for (unsigned int i = 0; i < trying_unhooks; ++i)
             {
-                if (dist(rd) % 25 == 0)
+                if (dist(e1) <= luck)
                 {
                     run[game] += 1;
                     break;
