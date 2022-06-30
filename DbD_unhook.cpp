@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "Russian");
 
-    unsigned int runs = 0;
+    unsigned long long runs = 0;
     unsigned int numbers_of_players = 4;
     unsigned int one_runs = 0;
     unsigned int two_runs = 0;
